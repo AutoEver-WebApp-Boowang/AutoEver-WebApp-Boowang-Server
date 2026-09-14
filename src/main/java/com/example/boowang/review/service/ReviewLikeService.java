@@ -1,6 +1,8 @@
 package com.example.boowang.review.service;
 
 
+import com.example.boowang.global.exception.BusinessException;
+import com.example.boowang.global.exception.ErrorCode;
 import com.example.boowang.review.entity.ReviewLike;
 import com.example.boowang.review.repository.ReviewLikeRepository;
 import com.example.boowang.review.repository.ReviewRepository;
@@ -18,10 +20,10 @@ public class ReviewLikeService {
 
     public ReviewLike like(Long reviewId, Long userId) {
         reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
         if(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, userId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 좋아요를 눌렀습니다.");
+            throw new BusinessException(ErrorCode.REVIEW_ALREADY_LIKED);
         }
 
         ReviewLike like = new ReviewLike();

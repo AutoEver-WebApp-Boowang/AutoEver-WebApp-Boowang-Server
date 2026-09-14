@@ -13,5 +13,4 @@ public class ReviewResponse {
     private String content;
     private Long likeCount;
     private LocalDateTime createdAt;
-    private Long totalCount;
 }

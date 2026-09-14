@@ -1,5 +1,9 @@
 package com.example.boowang.review.controller;
 
+import com.example.boowang.global.response.ApiResponse;
+import com.example.boowang.review.dto.request.ReviewCreateRequest;
+import com.example.boowang.review.dto.response.ReviewCreateResponse;
+import com.example.boowang.review.dto.response.ReviewListResponse;
 import com.example.boowang.review.entity.Review;
 import com.example.boowang.review.service.ReviewService;
 import lombok.RequiredArgsConstructor;
@@ -9,34 +13,40 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reviews")
+@RequestMapping("/api/places/{placeId}/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
     private final ReviewService reviewService;
 
+
+    //리뷰 목록 조회
     @GetMapping
-    public List<Review> getReviews() {
-        return reviewService.findAll();
+    public ApiResponse<ReviewListResponse> getReviews(@PathVariable Long placeId,
+                                                      @RequestParam(defaultValue = "0") int page,
+                                                      @RequestParam(defaultValue = "10") int size){
+        return ApiResponse.success(reviewService.findByPlace(placeId, page, size));
     }
 
-    @GetMapping("/{id}")
-    public Review getReview(@PathVariable Long id) {
-        return reviewService.findById(id);
-    }
 
+    //리뷰 작성
     @PostMapping
-    public Review createReview(@RequestBody Review review) {
-        return reviewService.create(review);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<ReviewCreateResponse> createReview(@PathVariable Long placeId, @RequestBody ReviewCreateRequest request) {
+        return ApiResponse.success(reviewService.create(placeId, request));
     }
 
-    @PutMapping("/{id}")
-    public Review updateReview(@PathVariable Long id, @RequestBody Review review) {
-        return reviewService.update(id, review);
+    //리뷰수정
+    @PatchMapping("/{reviewId}")
+    public ApiResponse<ReviewCreateResponse> updateReview(@PathVariable Long placeId, @PathVariable Long reviewId, @RequestBody ReviewCreateRequest request) {
+        return ApiResponse.success(reviewService.update(reviewId, request));
     }
+
+
+    //리뷰 삭제
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteReview(@PathVariable Long id){
-        reviewService.delete(id);
+    public void deleteReview(@PathVariable Long placeId, @PathVariable Long reviewId) {
+        reviewService.delete(reviewId);
     }
 }
