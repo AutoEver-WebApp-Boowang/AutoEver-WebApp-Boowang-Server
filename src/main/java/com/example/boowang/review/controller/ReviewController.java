@@ -35,18 +35,6 @@ public class ReviewController {
         return ApiResponse.success(reviewService.create(placeId, request));
     }
 
-    //리뷰수정
-    @PatchMapping("/{reviewId}")
-    public ApiResponse<ReviewCreateResponse> updateReview(@PathVariable Long placeId, @PathVariable Long reviewId, @RequestBody ReviewCreateRequest request) {
-        return ApiResponse.success(reviewService.update(reviewId, request));
-    }
 
 
-    //리뷰 삭제
-
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteReview(@PathVariable Long placeId, @PathVariable Long reviewId) {
-        reviewService.delete(reviewId);
-    }
 }

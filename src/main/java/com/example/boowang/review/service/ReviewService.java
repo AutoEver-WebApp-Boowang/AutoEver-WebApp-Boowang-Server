@@ -58,17 +58,7 @@ public class ReviewService {
         return new ReviewCreateResponse(saved.getId(), saved.getCreatedAt());
 
     }
-    //리뷰 업데이트
-    public ReviewCreateResponse update(Long reviewId, ReviewCreateRequest request) {
-        Review review = findById(reviewId);
-        review.setContent(request.getContent());
-        Review saved = reviewRepository.save(review);
-        return new ReviewCreateResponse(saved.getId(), saved.getCreatedAt());
-    }
 
-    //리뷰 삭제
-    public void delete(Long reviewId) {
-        Review review = findById(reviewId);
-        reviewRepository.delete(review);
-    }
+
+
 }
