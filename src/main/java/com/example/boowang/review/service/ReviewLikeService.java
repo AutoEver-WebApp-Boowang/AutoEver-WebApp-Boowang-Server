@@ -34,7 +34,7 @@ public class ReviewLikeService {
     @Transactional
     public void unlike(Long reviewId, Long userId) {
         if(!reviewLikeRepository.existsByReviewIdAndUserId(reviewId, userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "좋아요를 누르지 않았습니다.");
+            throw new BusinessException(ErrorCode.REVIEW_LIKE_NOT_FOUND);
         }
         reviewLikeRepository.deleteByReviewIdAndUserId(reviewId, userId);
     }

@@ -36,6 +36,7 @@ public enum ErrorCode {
     USER_ALREADY_WITHDRAWN(HttpStatus.CONFLICT, "이미 탈퇴한 사용자입니다."),
     REVIEW_ALREADY_LIKED(HttpStatus.CONFLICT, "이미 좋아요를 눌렀습니다."),
 
+
     // 500: 미리 예상하지 못한 서버 오류가 발생한 경우
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
 
