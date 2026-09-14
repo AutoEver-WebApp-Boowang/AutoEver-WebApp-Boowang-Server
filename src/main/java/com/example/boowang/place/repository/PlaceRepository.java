@@ -15,16 +15,16 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
         SELECT p FROM Place p
         JOIN p.parkingDetail pd
         WHERE p.deletedAt IS NULL
-          AND p.latitude BETWEEN :minLat AND :maxLat
-          AND p.longitude BETWEEN :minLng AND :maxLng
+         /* AND p.latitude BETWEEN :minLat AND :maxLat
+          AND p.longitude BETWEEN :minLng AND :maxLng */
           AND (:isFree IS NULL OR pd.isFree = :isFree)
           AND (:hasRoof IS NULL OR pd.hasRoof = :hasRoof)
         """)
-    List<Place> findNearby(
-            @Param("minLat") BigDecimal minLat,
+    List<Place> findAllWithFilter(
+           /* @Param("minLat") BigDecimal minLat,
             @Param("maxLat") BigDecimal maxLat,
             @Param("minLng") BigDecimal minLng,
-            @Param("maxLng") BigDecimal maxLng,
+            @Param("maxLng") BigDecimal maxLng, */
             @Param("isFree") Boolean isFree,
             @Param("hasRoof") Boolean hasRoof
     );

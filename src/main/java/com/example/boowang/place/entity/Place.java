@@ -40,6 +40,10 @@ public class Place {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    // ParkingDetail 쪽 @OneToOne의 주인은 ParkingDetail 이니까 mappedBy로 연결만
+    @OneToOne(mappedBy = "place", fetch = FetchType.LAZY)
+    private ParkingDetail parkingDetail;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
