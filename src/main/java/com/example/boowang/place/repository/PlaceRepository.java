@@ -36,4 +36,23 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
           AND (p.name LIKE %:keyword% OR p.address LIKE %:keyword%)
         """)
     List<Place> searchByKeyword(@Param("keyword") String keyword);
+
+    // GET /api/places/{placeId}  — 장소 상세조회
+    @Query("""
+    SELECT p FROM Place p
+    JOIN p.parkingDetail pd
+    WHERE p.deletedAt IS NULL
+      AND p.latitude >= :latMin AND p.latitude < :latMax
+      AND p.longitude >= :lngMin AND p.longitude < :lngMax
+      AND (:isFree IS NULL OR pd.isFree = :isFree)
+      AND (:hasRoof IS NULL OR pd.hasRoof = :hasRoof)
+    """)
+    List<Place> findByCoordinateRange(
+            @Param("latMin") BigDecimal latMin,
+            @Param("latMax") BigDecimal latMax,
+            @Param("lngMin") BigDecimal lngMin,
+            @Param("lngMax") BigDecimal lngMax,
+            @Param("isFree") Boolean isFree,
+            @Param("hasRoof") Boolean hasRoof
+    );
 }
