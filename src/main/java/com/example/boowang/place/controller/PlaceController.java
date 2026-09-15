@@ -1,13 +1,17 @@
 package com.example.boowang.place.controller;
 
+import com.example.boowang.place.dto.response.PlaceDetailResponse;
 import com.example.boowang.place.dto.response.PlaceListResponse;
 import com.example.boowang.place.dto.response.PlaceSearchResponse;
+import com.example.boowang.place.entity.Favorite;
 import com.example.boowang.place.service.PlaceService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/places")
@@ -16,14 +20,16 @@ public class PlaceController {
 
     private final PlaceService placeService;
 
-
     // GET /api/places
     @GetMapping
     public PlaceListResponse getPlaces(
+            @RequestParam BigDecimal lat,
+            @RequestParam BigDecimal lng,
+            @RequestParam(required = false) Integer precision,
             @RequestParam(required = false) Boolean isFree,
             @RequestParam(required = false) Boolean hasRoof
     ) {
-        return placeService.getPlaces(isFree, hasRoof);
+        return placeService.getNearbyPlaces(lat, lng, precision, isFree, hasRoof);
     }
 
     // GET /api/places/search
@@ -32,7 +38,11 @@ public class PlaceController {
         return placeService.searchPlaces(keyword);
     }
 
-
+    // GET /api/places/{placeId}
+    @GetMapping("/{placeId}")
+    public PlaceDetailResponse getPlaceDetail(@PathVariable Long placeId) {
+        return placeService.getPlaceDetail(placeId);
+    }
 
     // POST /api/places
 
@@ -52,4 +62,6 @@ public class PlaceController {
 
 
     // GET /api/users/me/favorites
+
+
 }
