@@ -1,5 +1,6 @@
 package com.example.boowang.place.controller;
 
+import com.example.boowang.place.dto.request.PlaceRegisterRequest;
 import com.example.boowang.place.dto.response.PlaceDetailResponse;
 import com.example.boowang.place.dto.response.PlaceListResponse;
 import com.example.boowang.place.dto.response.PlaceSearchResponse;
@@ -45,6 +46,15 @@ public class PlaceController {
     }
 
     // POST /api/places
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Map<String, Long> registerPlace(
+            @RequestParam Long userId,
+            @RequestBody PlaceRegisterRequest request
+    ) {
+        Long placeId = placeService.registerPlace(userId, request);
+        return Map.of("id", placeId);
+    }
 
 
 
@@ -62,6 +72,7 @@ public class PlaceController {
 
 
     // GET /api/users/me/favorites
+
 
 
 }
