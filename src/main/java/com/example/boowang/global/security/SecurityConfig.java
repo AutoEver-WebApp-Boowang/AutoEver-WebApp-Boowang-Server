@@ -9,6 +9,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import com.example.boowang.global.security.jwt.JwtAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 // 어떤 주소를 공개하고 어떤 주소에 로그인을 요구할지 정하는 보안 설정이다.
 @Configuration
 @RequiredArgsConstructor
@@ -20,6 +23,9 @@ public class SecurityConfig {
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     // 권한이 부족한 요청에 403 공통 JSON을 보내는 처리기이다.
     private final RestAccessDeniedHandler accessDeniedHandler;
+
+    //http 요청의 액세스 토큰을 검사하는 jwt 인증 필터이다.
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     // 모든 HTTP 요청이 통과하는 Spring Security 필터들의 규칙을 만든다.
     @Bean
@@ -51,6 +57,11 @@ public class SecurityConfig {
                         //.anyRequest().authenticated()
                         // 일단 카카오 로그인과 jwt 인증 필터 연결 후에 변경
                         .anyRequest().permitAll()
+                )
+                // 아이디·비밀번호 인증 필터보다 먼저 JWT 인증 필터를 실행한다.
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
                 );
 
         // 위에서 작성한 규칙으로 실제 Security 필터 묶음을 완성한다.
