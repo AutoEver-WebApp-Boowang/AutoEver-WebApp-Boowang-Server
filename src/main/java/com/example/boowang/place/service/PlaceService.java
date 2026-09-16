@@ -1,15 +1,14 @@
 package com.example.boowang.place.service;
 
+import com.example.boowang.place.dto.request.PlaceRegisterRequest;
 import com.example.boowang.place.dto.response.PlaceDetailResponse;
 import com.example.boowang.place.dto.response.PlaceListResponse;
 import com.example.boowang.place.dto.response.PlaceSearchResponse;
 import com.example.boowang.place.dto.response.PlaceSummaryResponse;
 import com.example.boowang.place.entity.ParkingDetail;
 import com.example.boowang.place.entity.Place;
-import com.example.boowang.place.repository.FavoriteRepository;
-import com.example.boowang.place.repository.ParkingDetailRepository;
-import com.example.boowang.place.repository.PlaceReactionRepository;
-import com.example.boowang.place.repository.PlaceRepository;
+import com.example.boowang.place.entity.PlacePhoto;
+import com.example.boowang.place.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +26,9 @@ public class PlaceService {
     private final FavoriteRepository favoriteRepository;
     private final ParkingDetailRepository parkingDetailRepository;
     private final PlaceReactionRepository placeReactionRepository;
+    private final PlacePhotoRepository placePhotoRepository;
 
-    // GET /api/places
+    // GET /api/places  -- 장소 전체 조회
     public PlaceListResponse getNearbyPlaces(BigDecimal lat, BigDecimal lng, Integer precision,
                                              Boolean isFree, Boolean hasRoof) {
         int digits = (precision != null) ? precision : 3;
@@ -50,7 +50,7 @@ public class PlaceService {
         return new PlaceListResponse(result);
     }
 
-    // GET /api/places/search
+    // GET /api/places/search   -- 장소 검색
     public PlaceSearchResponse searchPlaces(String keyword) {
         List<Place> found = placeRepository.searchByKeyword(keyword);
 
@@ -61,7 +61,7 @@ public class PlaceService {
         return new PlaceSearchResponse(result, result.size());
     }
 
-    // GET /api/places/{placeId}
+    // GET /api/places/{placeId}  -- 장소 상세정보 조회
     public PlaceDetailResponse getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
                 .filter(p -> p.getDeletedAt() == null)
@@ -70,6 +70,12 @@ public class PlaceService {
         ParkingDetail pd = place.getParkingDetail();
 
         long recommendCount = placeReactionRepository.countByPlaceIdAndReactionType(placeId, "추천");
+        long notRecommendCount = placeReactionRepository.countByPlaceIdAndReactionType(placeId, "비추천");
+
+        List<String> photos = placePhotoRepository.findByPlaceIdOrderBySortOrderAsc(placeId)
+                .stream()
+                .map(PlacePhoto::getImageUrl)
+                .toList();
 
         return new PlaceDetailResponse(
                 place.getId(),
@@ -83,13 +89,43 @@ public class PlaceService {
                 pd != null ? pd.getCapacity() : null,
                 pd != null ? pd.getFeeDescription() : null,
                 place.getDescription(),
+                place.getType(),
+                place.getLastConfirmedAt(),
                 (int) recommendCount,
+                (int) notRecommendCount,
                 0,
-                place.getUpdatedAt()
+                place.getUpdatedAt(),
+                photos
         );
     }
 
-    // POST /api/places
+    // POST /api/places — 장소 등록
+    @Transactional
+    public Long registerPlace(Long userId, PlaceRegisterRequest request) {
+        Place place = Place.builder()
+                .createdBy(userId)
+                .name(request.name())
+                .address(request.address())
+                .detailAddress(request.detailAddress())
+                .latitude(request.latitude())
+                .longitude(request.longitude())
+                .description(request.description())
+                .type(request.type())
+                .build();
+        placeRepository.save(place);
+
+        ParkingDetail parkingDetail = ParkingDetail.builder()
+                .place(place)
+                .isFree(request.isFree())
+                .hasRoof(request.hasRoof())
+                .feeDescription(request.feeDescription())
+                .capacity(request.capacity())
+                .operatingHours(request.operatingHours())
+                .build();
+        parkingDetailRepository.save(parkingDetail);
+
+        return place.getId();
+    }
 
 
 
@@ -109,8 +145,16 @@ public class PlaceService {
     // GET /api/users/me/favorites
 
 
+
     private PlaceSummaryResponse toSummary(Place place) {
         ParkingDetail pd = place.getParkingDetail();
+
+        String thumbnailUrl = placePhotoRepository.findFirstByPlaceIdOrderBySortOrderAsc(place.getId())
+                .map(PlacePhoto::getImageUrl)
+                .orElse(null);
+
+        long recommendCount = placeReactionRepository.countByPlaceIdAndReactionType(place.getId(), "추천");
+        long notRecommendCount = placeReactionRepository.countByPlaceIdAndReactionType(place.getId(), "비추천");
 
         return new PlaceSummaryResponse(
                 place.getId(),
@@ -120,7 +164,12 @@ public class PlaceService {
                 place.getLongitude(),
                 pd != null ? pd.getIsFree() : null,
                 pd != null ? pd.getHasRoof() : null,
-                pd != null ? pd.getOperatingHours() : null
+                pd != null ? pd.getOperatingHours() : null,
+                thumbnailUrl,
+                place.getType(),
+                place.getLastConfirmedAt(),
+                (int) recommendCount,
+                (int) notRecommendCount
         );
     }
 }

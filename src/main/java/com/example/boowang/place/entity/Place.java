@@ -40,6 +40,14 @@ public class Place {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    // 공영/제보
+    @Column(length = 10)
+    private String type;
+
+    // 최근정보 확인 시간
+    @Column(name = "last_confirmed_at")
+    private LocalDateTime lastConfirmedAt;
+
     // ParkingDetail 쪽 @OneToOne의 주인은 ParkingDetail 이니까 mappedBy로 연결만
     @OneToOne(mappedBy = "place", fetch = FetchType.LAZY)
     private ParkingDetail parkingDetail;
@@ -55,7 +63,7 @@ public class Place {
 
     @Builder
     public Place(Long createdBy, String name, String address, String detailAddress,
-                 BigDecimal latitude, BigDecimal longitude, String description) {
+                 BigDecimal latitude, BigDecimal longitude, String description, String type) {
         this.createdBy = createdBy;
         this.name = name;
         this.address = address;
@@ -63,6 +71,7 @@ public class Place {
         this.latitude = latitude;
         this.longitude = longitude;
         this.description = description;
+        this.type = type;
     }
 
     @PrePersist
@@ -75,6 +84,13 @@ public class Place {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // 추가: 소프트 삭제 처리
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
 
-
+    // 추가: 최근 확인 시각 갱신 (향후 "정보 확인" 기능에서 사용 예정)
+    public void confirmNow() {
+        this.lastConfirmedAt = LocalDateTime.now();
+    }
 }

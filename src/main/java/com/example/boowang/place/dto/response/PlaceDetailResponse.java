@@ -2,6 +2,7 @@ package com.example.boowang.place.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record PlaceDetailResponse(
         Long id,
@@ -15,10 +16,12 @@ public record PlaceDetailResponse(
         Integer capacity,  // 주차 가능 대수
         String feeDescription,  // 유료 요금
         String description,
+        String type, // 공영/제보 구분
+        LocalDateTime lastConfirmedAt, // 최근 확인 시각
         Integer recommendCount,
+        Integer notRecommendCount, // 비추천 수
         Integer reviewCount,
-        LocalDateTime updatedAt
-
-
+        LocalDateTime updatedAt,
+        List<String> photos  // 이미지 리스트
 ) {
 }
