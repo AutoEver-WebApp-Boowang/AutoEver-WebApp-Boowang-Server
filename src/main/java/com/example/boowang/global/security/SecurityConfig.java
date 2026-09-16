@@ -44,19 +44,18 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
-                // Swagger와 소셜 로그인 주소만 로그인 없이 접근할 수 있게 한다.
+                // Swagger, 소셜 로그인, 테스트 로그인 주소는 로그인 없이 접근할 수 있다.
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
+                                "/api/test-auth/login",
                                 "/error"
                         ).permitAll()
-                        // 위에 적지 않은 나머지 주소는 모두 로그인이 필요하다.
-                        //.anyRequest().authenticated()
-                        // 일단 카카오 로그인과 jwt 인증 필터 연결 후에 변경
-                        .anyRequest().permitAll()
+                        // 위에 적지 않은 나머지 주소는 모두 액세스 토큰이 필요하다.
+                        .anyRequest().authenticated()
                 )
                 // 아이디·비밀번호 인증 필터보다 먼저 JWT 인증 필터를 실행한다.
                 .addFilterBefore(
