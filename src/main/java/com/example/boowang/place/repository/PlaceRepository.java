@@ -10,21 +10,21 @@ import java.util.List;
 
 public interface PlaceRepository extends JpaRepository<Place, Long> {
 
-    // GET /api/places — 위치 + 필터 조회
+    // GET /api/places — Bounding Box 내 장소 조회
     @Query("""
         SELECT p FROM Place p
         JOIN p.parkingDetail pd
         WHERE p.deletedAt IS NULL
-         /* AND p.latitude BETWEEN :minLat AND :maxLat
-          AND p.longitude BETWEEN :minLng AND :maxLng */
+          AND p.latitude BETWEEN :swLat AND :neLat
+          AND p.longitude BETWEEN :swLng AND :neLng
           AND (:isFree IS NULL OR pd.isFree = :isFree)
           AND (:hasRoof IS NULL OR pd.hasRoof = :hasRoof)
         """)
-    List<Place> findAllWithFilter(
-           /* @Param("minLat") BigDecimal minLat,
-            @Param("maxLat") BigDecimal maxLat,
-            @Param("minLng") BigDecimal minLng,
-            @Param("maxLng") BigDecimal maxLng, */
+    List<Place> findByBoundingBox(
+            @Param("swLat") BigDecimal swLat,
+            @Param("neLat") BigDecimal neLat,
+            @Param("swLng") BigDecimal swLng,
+            @Param("neLng") BigDecimal neLng,
             @Param("isFree") Boolean isFree,
             @Param("hasRoof") Boolean hasRoof
     );
@@ -36,23 +36,4 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
           AND (p.name LIKE %:keyword% OR p.address LIKE %:keyword%)
         """)
     List<Place> searchByKeyword(@Param("keyword") String keyword);
-
-    // GET /api/places/{placeId}  — 장소 상세조회
-    @Query("""
-    SELECT p FROM Place p
-    JOIN p.parkingDetail pd
-    WHERE p.deletedAt IS NULL
-      AND p.latitude >= :latMin AND p.latitude < :latMax
-      AND p.longitude >= :lngMin AND p.longitude < :lngMax
-      AND (:isFree IS NULL OR pd.isFree = :isFree)
-      AND (:hasRoof IS NULL OR pd.hasRoof = :hasRoof)
-    """)
-    List<Place> findByCoordinateRange(
-            @Param("latMin") BigDecimal latMin,
-            @Param("latMax") BigDecimal latMax,
-            @Param("lngMin") BigDecimal lngMin,
-            @Param("lngMax") BigDecimal lngMax,
-            @Param("isFree") Boolean isFree,
-            @Param("hasRoof") Boolean hasRoof
-    );
 }

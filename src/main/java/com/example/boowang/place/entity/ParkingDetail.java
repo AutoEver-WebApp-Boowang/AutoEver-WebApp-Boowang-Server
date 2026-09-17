@@ -52,9 +52,10 @@ public class ParkingDetail {
         this.operatingHours = operatingHours;
     }
 
-    public void updateFee(String feeDescription, Integer capacity) {
+    public void updateFee(String feeDescription, Integer capacity, Boolean hasRoof) {
         if (feeDescription != null) this.feeDescription = feeDescription;
         if (capacity != null) this.capacity = capacity;
+        if (hasRoof != null) this.hasRoof = hasRoof;
     }
 
     @PreUpdate

@@ -89,7 +89,7 @@ public class Place {
         this.deletedAt = LocalDateTime.now();
     }
 
-    // 추가: 최근 확인 시각 갱신 (향후 "정보 확인" 기능에서 사용 예정)
+    // 추가: 최근 확인 시각 갱신
     public void confirmNow() {
         this.lastConfirmedAt = LocalDateTime.now();
     }
