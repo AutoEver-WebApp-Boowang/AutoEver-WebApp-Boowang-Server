@@ -1,6 +1,7 @@
 package com.example.boowang.place.controller;
 
 import com.example.boowang.place.service.PlacePhotoService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/places/{placeId}/photos")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class PlacePhotoController {
 
     private final PlacePhotoService placePhotoService;

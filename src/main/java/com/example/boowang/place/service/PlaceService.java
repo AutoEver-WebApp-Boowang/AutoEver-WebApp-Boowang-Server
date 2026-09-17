@@ -1,6 +1,5 @@
 package com.example.boowang.place.service;
 
-import com.example.boowang.place.dto.request.PlaceRegisterRequest;
 import com.example.boowang.place.dto.response.PlaceDetailResponse;
 import com.example.boowang.place.dto.response.PlaceListResponse;
 import com.example.boowang.place.dto.response.PlaceSearchResponse;
@@ -8,7 +7,9 @@ import com.example.boowang.place.dto.response.PlaceSummaryResponse;
 import com.example.boowang.place.entity.ParkingDetail;
 import com.example.boowang.place.entity.Place;
 import com.example.boowang.place.entity.PlacePhoto;
-import com.example.boowang.place.repository.*;
+import com.example.boowang.place.repository.PlacePhotoRepository;
+import com.example.boowang.place.repository.PlaceReactionRepository;
+import com.example.boowang.place.repository.PlaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,25 +23,18 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class PlaceService {
 
+    private static final int COORDINATE_SCALE = 6;
+
     private final PlaceRepository placeRepository;
-    private final FavoriteRepository favoriteRepository;
-    private final ParkingDetailRepository parkingDetailRepository;
     private final PlaceReactionRepository placeReactionRepository;
     private final PlacePhotoRepository placePhotoRepository;
 
-    // GET /api/places  -- 장소 전체 조회
-    public PlaceListResponse getNearbyPlaces(BigDecimal lat, BigDecimal lng, Integer precision,
-                                             Boolean isFree, Boolean hasRoof) {
-        int digits = (precision != null) ? precision : 3;
-        BigDecimal unit = BigDecimal.ONE.movePointLeft(digits);
-
-        BigDecimal latFloor = lat.setScale(digits, RoundingMode.FLOOR);
-        BigDecimal lngFloor = lng.setScale(digits, RoundingMode.FLOOR);
-        BigDecimal latCeil = latFloor.add(unit);
-        BigDecimal lngCeil = lngFloor.add(unit);
-
-        List<Place> places = placeRepository.findByCoordinateRange(
-                latFloor, latCeil, lngFloor, lngCeil, isFree, hasRoof
+    // GET /api/places -- Bounding Box 내 장소 조회
+    public PlaceListResponse getPlacesInBoundingBox(BigDecimal swLat, BigDecimal swLng,
+                                                    BigDecimal neLat, BigDecimal neLng,
+                                                    Boolean isFree, Boolean hasRoof) {
+        List<Place> places = placeRepository.findByBoundingBox(
+                round(swLat), round(neLat), round(swLng), round(neLng), isFree, hasRoof
         );
 
         List<PlaceSummaryResponse> result = places.stream()
@@ -50,7 +44,7 @@ public class PlaceService {
         return new PlaceListResponse(result);
     }
 
-    // GET /api/places/search   -- 장소 검색
+    // GET /api/places/search -- 장소 검색
     public PlaceSearchResponse searchPlaces(String keyword) {
         List<Place> found = placeRepository.searchByKeyword(keyword);
 
@@ -61,7 +55,7 @@ public class PlaceService {
         return new PlaceSearchResponse(result, result.size());
     }
 
-    // GET /api/places/{placeId}  -- 장소 상세정보 조회
+    // GET /api/places/{placeId} -- 장소 상세정보 조회
     public PlaceDetailResponse getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
                 .filter(p -> p.getDeletedAt() == null)
@@ -99,54 +93,7 @@ public class PlaceService {
         );
     }
 
-    // POST /api/places — 장소 등록
-    @Transactional
-    public Long registerPlace(Long userId, PlaceRegisterRequest request) {
-        Place place = Place.builder()
-                .createdBy(userId)
-                .name(request.name())
-                .address(request.address())
-                .detailAddress(request.detailAddress())
-                .latitude(request.latitude())
-                .longitude(request.longitude())
-                .description(request.description())
-                .type(request.type())
-                .build();
-        placeRepository.save(place);
-
-        ParkingDetail parkingDetail = ParkingDetail.builder()
-                .place(place)
-                .isFree(request.isFree())
-                .hasRoof(request.hasRoof())
-                .feeDescription(request.feeDescription())
-                .capacity(request.capacity())
-                .operatingHours(request.operatingHours())
-                .build();
-        parkingDetailRepository.save(parkingDetail);
-
-        return place.getId();
-    }
-
-
-
-    // PATCH /api/places/{placeId}
-
-
-
-    // DELETE /api/places/{placeId}
-
-
-    // POST /api/places/{placeId}/favorites
-
-
-    // DELETE /api/places/{placeId}/favorites
-
-
-    // GET /api/users/me/favorites
-
-
-
-    private PlaceSummaryResponse toSummary(Place place) {
+    PlaceSummaryResponse toSummary(Place place) {
         ParkingDetail pd = place.getParkingDetail();
 
         String thumbnailUrl = placePhotoRepository.findFirstByPlaceIdOrderBySortOrderAsc(place.getId())
@@ -171,5 +118,9 @@ public class PlaceService {
                 (int) recommendCount,
                 (int) notRecommendCount
         );
+    }
+
+    private BigDecimal round(BigDecimal value) {
+        return value.setScale(COORDINATE_SCALE, RoundingMode.HALF_UP);
     }
 }
