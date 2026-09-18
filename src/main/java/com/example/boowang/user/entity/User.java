@@ -49,4 +49,16 @@ public class User {
     public static User create(String nickname) {
         return new User(nickname);
     }
+
+
+    // 사용자의 닉네임을 변경한다.
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    // 휴대폰 번호를 변경한다. null이면 기존 번호를 삭제한다.
+    public void changePhone(String phone) {
+        this.phone = phone;
+    }
+
 }
