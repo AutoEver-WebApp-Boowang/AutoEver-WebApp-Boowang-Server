@@ -20,15 +20,17 @@ public class ReviewLikeService {
     private final ReviewRepository reviewRepository;
 
     public ReviewLikeResponse like(Long reviewId, Long userId) {
+
+
         reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
-
         if(reviewLikeRepository.existsByReviewIdAndUserId(reviewId, userId)) {
             throw new BusinessException(ErrorCode.REVIEW_ALREADY_LIKED);
         }
 
         ReviewLike like = new ReviewLike();
-        like.setReviewId(reviewId);
+        like.setReview(reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND)));
         like.setUserId(userId);
 
         reviewLikeRepository.save(like);
