@@ -27,7 +27,11 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponse.error(errorCode.name(), errorCode.getMessage()));
+                .body(ApiResponse.error(
+                        errorCode.name(),
+                        errorCode.getMessage(),
+                        exception.getFieldErrors()
+                ));
     }
 
     // @Valid 검증에 실패했을 때 어떤 입력 필드가 왜 틀렸는지 목록으로 만든다.
