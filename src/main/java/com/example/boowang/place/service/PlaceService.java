@@ -1,5 +1,7 @@
 package com.example.boowang.place.service;
 
+import com.example.boowang.global.exception.BusinessException;
+import com.example.boowang.global.exception.ErrorCode;
 import com.example.boowang.place.dto.response.PlaceDetailResponse;
 import com.example.boowang.place.dto.response.PlaceListResponse;
 import com.example.boowang.place.dto.response.PlaceSearchResponse;
@@ -59,7 +61,7 @@ public class PlaceService {
     public PlaceDetailResponse getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
                 .filter(p -> p.getDeletedAt() == null)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 장소입니다. placeId=" + placeId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
 
         ParkingDetail pd = place.getParkingDetail();
 

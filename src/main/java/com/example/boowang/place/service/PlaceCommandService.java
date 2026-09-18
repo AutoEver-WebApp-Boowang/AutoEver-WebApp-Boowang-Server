@@ -1,5 +1,7 @@
 package com.example.boowang.place.service;
 
+import com.example.boowang.global.exception.BusinessException;
+import com.example.boowang.global.exception.ErrorCode;
 import com.example.boowang.place.dto.request.PlaceRegisterRequest;
 import com.example.boowang.place.dto.request.PlaceUpdateRequest;
 import com.example.boowang.place.dto.response.PlaceSummaryResponse;
@@ -59,29 +61,29 @@ public class PlaceCommandService {
     // PATCH /api/places/{placeId} -- 장소정보 수정
     public void updatePlaceFee(Long placeId, PlaceUpdateRequest request) {
         if (request.feeDescription() == null && request.capacity() == null && request.hasRoof() == null) {
-            throw new IllegalArgumentException("수정할 정보를 입력해 주세요.");
+            throw new BusinessException(ErrorCode.PLACE_UPDATE_REQUEST_EMPTY);
         }
 
         ParkingDetail parkingDetail = parkingDetailRepository.findById(placeId)
-                .orElseThrow(() -> new IllegalArgumentException("해당장소의 주차 정보가 없습니다. placeId=" + placeId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARKING_DETAIL_NOT_FOUND));
         parkingDetail.updateFee(request.feeDescription(), request.capacity(), request.hasRoof());
 
         Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 장소입니다. placeId=" + placeId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
         place.confirmNow(); // 최근확인 (수정한시간)
     }
 
     // DELETE /api/places/{placeId} -- 장소정보 삭제
     public void deletePlace(Long placeId) {
         Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 장소입니다. placeId=" + placeId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
         place.softDelete();
     }
 
     // POST /api/places/{placeId}/favorites -- 즐겨찾기 추가
     public void addFavorite(Long userId, Long placeId) {
         favoriteRepository.findByUserIdAndPlaceId(userId, placeId)
-                .ifPresent(f -> { throw new IllegalStateException("이미 즐겨찾기한 장소입니다."); });
+                .ifPresent(f -> { throw new BusinessException(ErrorCode.FAVORITE_ALREADY_EXISTS); });
 
         Favorite favorite = Favorite.builder()
                 .userId(userId)
