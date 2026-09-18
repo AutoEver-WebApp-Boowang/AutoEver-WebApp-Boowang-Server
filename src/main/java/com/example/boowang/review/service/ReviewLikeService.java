@@ -3,6 +3,7 @@ package com.example.boowang.review.service;
 
 import com.example.boowang.global.exception.BusinessException;
 import com.example.boowang.global.exception.ErrorCode;
+import com.example.boowang.review.dto.response.ReviewLikeResponse;
 import com.example.boowang.review.entity.ReviewLike;
 import com.example.boowang.review.repository.ReviewLikeRepository;
 import com.example.boowang.review.repository.ReviewRepository;
@@ -18,7 +19,7 @@ public class ReviewLikeService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final ReviewRepository reviewRepository;
 
-    public ReviewLike like(Long reviewId, Long userId) {
+    public ReviewLikeResponse like(Long reviewId, Long userId) {
         reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
@@ -29,13 +30,17 @@ public class ReviewLikeService {
         ReviewLike like = new ReviewLike();
         like.setReviewId(reviewId);
         like.setUserId(userId);
-        return reviewLikeRepository.save(like);
+
+        reviewLikeRepository.save(like);
+        long likeCount = reviewLikeRepository.countByReviewId(reviewId);
+        return new ReviewLikeResponse(reviewId, likeCount);
     }
     @Transactional
     public void unlike(Long reviewId, Long userId) {
         if(!reviewLikeRepository.existsByReviewIdAndUserId(reviewId, userId)) {
             throw new BusinessException(ErrorCode.REVIEW_LIKE_NOT_FOUND);
         }
+
         reviewLikeRepository.deleteByReviewIdAndUserId(reviewId, userId);
     }
 }
