@@ -3,6 +3,7 @@ package com.example.boowang.global.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -66,6 +67,14 @@ public class SecurityConfig {
                                 "/api/test-auth/login",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/places",
+                                "/api/places/search",
+                                "/api/places/*",
+                                "/api/places/*/reviews"
+                        ).permitAll()
+
+
                         // 위에 적지 않은 나머지 주소는 모두 액세스 토큰이 필요하다.
                         .anyRequest().authenticated()
                 )

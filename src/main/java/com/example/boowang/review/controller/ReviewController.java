@@ -1,11 +1,13 @@
 package com.example.boowang.review.controller;
 
 import com.example.boowang.global.response.ApiResponse;
+import com.example.boowang.place.entity.Place;
 import com.example.boowang.review.dto.request.ReviewCreateRequest;
 import com.example.boowang.review.dto.response.ReviewCreateResponse;
 import com.example.boowang.review.dto.response.ReviewListResponse;
 import com.example.boowang.review.entity.Review;
 import com.example.boowang.review.service.ReviewService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/places/{placeId}/reviews")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class ReviewController {
     private final ReviewService reviewService;
 

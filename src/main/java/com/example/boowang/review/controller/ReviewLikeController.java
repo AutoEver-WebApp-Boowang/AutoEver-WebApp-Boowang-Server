@@ -4,12 +4,14 @@ import com.example.boowang.global.response.ApiResponse;
 import com.example.boowang.review.dto.response.ReviewLikeResponse;
 import com.example.boowang.review.entity.ReviewLike;
 import com.example.boowang.review.service.ReviewLikeService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class ReviewLikeController {
 
     private final ReviewLikeService reviewLikeService;

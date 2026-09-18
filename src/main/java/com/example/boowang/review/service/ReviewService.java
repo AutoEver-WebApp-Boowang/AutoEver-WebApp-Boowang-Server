@@ -2,6 +2,8 @@ package com.example.boowang.review.service;
 
 import com.example.boowang.global.exception.BusinessException;
 import com.example.boowang.global.exception.ErrorCode;
+import com.example.boowang.place.entity.Place;
+import com.example.boowang.place.repository.PlaceRepository;
 import com.example.boowang.review.dto.request.ReviewCreateRequest;
 import com.example.boowang.review.dto.response.ReviewCreateResponse;
 import com.example.boowang.review.dto.response.ReviewListResponse;
@@ -25,12 +27,15 @@ import java.util.List;
 public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
+    private final PlaceRepository placeRepository;
 
 
     //리뷰 목록 조회
     public ReviewListResponse findByPlace(Long placeId, int page, int size){
+        placeRepository.findById(placeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Review> reviewPage = reviewRepository.findByPlaceId(placeId, pageable);
+        Page<Review> reviewPage = reviewRepository.findByPlace_Id(placeId, pageable);
 
         List<ReviewResponse> reviews = reviewPage.getContent().stream()
                 .map(review -> new ReviewResponse(
@@ -50,8 +55,11 @@ public class ReviewService {
 
     //리뷰 작성
     public ReviewCreateResponse create(Long placeId, ReviewCreateRequest request) {
+
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
         Review review = new Review();
-        review.setPlaceId(placeId);
+        review.setPlace(place);
         review.setUserId(1L);
         review.setContent(request.getContent());
         Review saved = reviewRepository.save(review);
