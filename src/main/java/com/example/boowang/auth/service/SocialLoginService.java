@@ -15,6 +15,17 @@ import java.util.Optional;
 
 import com.example.boowang.user.repository.UserRepository;
 
+import com.example.boowang.auth.dto.SocialLoginResult;
+import com.example.boowang.auth.dto.response.AccessTokenResponse;
+import com.example.boowang.auth.entity.AuthSession;
+import com.example.boowang.auth.repository.AuthSessionRepository;
+import com.example.boowang.global.security.jwt.JwtProperties;
+import com.example.boowang.global.security.jwt.JwtTokenProvider;
+import com.example.boowang.global.security.token.RefreshTokenProvider;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 //소셜 계정과 연결된 부왕 사용자를 확인
@@ -29,6 +40,18 @@ public class SocialLoginService {
 
     private final SocialAccountRepository socialAccountRepository;
     private final UserRepository userRepository;
+
+    // 로그인 세션을 DB에 저장한다.
+    private final AuthSessionRepository authSessionRepository;
+
+    // 리프레시 토큰 원본과 해시값을 만든다.
+    private final RefreshTokenProvider refreshTokenProvider;
+
+    // 부왕 JWT 액세스 토큰을 만든다.
+    private final JwtTokenProvider jwtTokenProvider;
+
+    // 설정에서 토큰의 유효시간을 가져온다.
+    private final JwtProperties jwtProperties;
 
     //조회만 하므로 읽기 전용 트렌잭션을 사용한다.
     @Transactional(readOnly = true)
@@ -53,7 +76,7 @@ public class SocialLoginService {
         if(user.getDeletedAt() != null){
             throw new BusinessException(ErrorCode.USER_WITHDRAWN); //여기서 걸리면
         }
-        return Optional.of(user); //이건 실행 안됨
+        return Optional.of(user); //탈퇴 예외가 발생하면 실행 안됨
     }
     // 소셜 닉네임을 정리하고 랜덤 문자를 붙일 공간을 확보한다.
     private String prepareNicknameBase(String socialNickname) {
@@ -144,5 +167,64 @@ public class SocialLoginService {
         socialAccountRepository.save(socialAccount);
 
         return newUser;
+
+    }
+    // 소셜 로그인한 회원에게 세션과 부왕 토큰을 발급한다. findOrCreateUser()가 회원을 확인하기에 가입코드는 다시 작성 안함
+    @Transactional //중간에 오류발생 시 전부 취소되게끔
+    public SocialLoginResult login(
+            SocialProvider provider,
+            String providerUserId,
+            String socialNickname
+    ) {
+        // 기존 회원을 가져오거나 최초 로그인한 회원을 가입시킨다.
+        // 탈퇴한 회원이면 여기서 예외가 발생하여 중단된다.
+        User user = findOrCreateUser(
+                provider,
+                providerUserId,
+                socialNickname
+        );
+
+        // 예측하기 어려운 랜덤 리프레시 토큰을 만든다.
+        String refreshToken = refreshTokenProvider.generateToken(); //이게 랜덤원본
+
+        // DB에 저장할 SHA-256 해시값을 만든다.
+        String refreshTokenHash =
+                refreshTokenProvider.hashToken(refreshToken); //이게 진짜 우리db에 들어감
+
+        // 지금부터 설정된 유효시간만큼 지난 시각을 계산한다.
+        LocalDateTime expiresAt = LocalDateTime.now().plus(
+                Duration.ofMillis(
+                        jwtProperties.getRefreshTokenExpirationMs()
+                )
+        );
+
+        // 이번 로그인에 해당하는 세션을 DB에 저장한다.
+        AuthSession session = authSessionRepository.save( //세션을 저장하면 db가 세션 번호 부여
+                AuthSession.create(
+                        user,
+                        refreshTokenHash,
+                        expiresAt
+                )
+        );
+
+        // 회원 번호와 저장된 세션 번호를 담은 JWT를 만든다.
+        String accessToken = jwtTokenProvider.createAccessToken( //44번째줄 참고
+                user.getId(), //이게 첫 번째 인자 sub
+                session.getId() //두 번째 인자 sid
+        );
+
+        // 응답의 expiresIn은 초 단위이다.
+        AccessTokenResponse accessTokenResponse =
+                new AccessTokenResponse(
+                        accessToken,
+                        "Bearer",
+                        jwtProperties.getAccessTokenExpirationMs() / 1000
+                );
+
+        // 성공처리기에 JSON용 정보와 쿠키용 원본을 전달한다.
+        return new SocialLoginResult(
+                accessTokenResponse,
+                refreshToken
+        );
     }
 }

@@ -12,6 +12,7 @@ public enum ErrorCode {
 
     // 400: 사용자가 보낸 요청값이나 JSON 형식이 잘못된 경우
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "입력값을 확인해 주세요."),
+    PLACE_UPDATE_REQUEST_EMPTY(HttpStatus.BAD_REQUEST, "수정할 정보를 입력해 주세요."),
 
     // 401: 로그인 토큰 또는 로그인 세션에 문제가 있는 경우
     ACCESS_TOKEN_MISSING(HttpStatus.UNAUTHORIZED, "Access Token이 없습니다."),
@@ -31,11 +32,13 @@ public enum ErrorCode {
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
     REVIEW_LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "좋아요를 찾을 수 없습니다."),
     PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "장소를 찾을 수 없습니다."),
+    PARKING_DETAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 장소의 주차 정보를 찾을 수 없습니다."),
 
     // 409: 현재 DB 상태와 요청이 충돌하는 경우
     NICKNAME_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
     USER_ALREADY_WITHDRAWN(HttpStatus.CONFLICT, "이미 탈퇴한 사용자입니다."),
     REVIEW_ALREADY_LIKED(HttpStatus.CONFLICT, "이미 좋아요를 눌렀습니다."),
+    FAVORITE_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 즐겨찾기한 장소입니다."),
 
 
 
