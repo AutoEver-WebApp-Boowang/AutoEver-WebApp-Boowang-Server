@@ -41,8 +41,8 @@ public class JwtTokenProvider {
         Instant expiresAt = issuedAt.plusMillis(accessTokenExpirationMs);
 
         return Jwts.builder()
-                .subject(userId.toString())
-                .claim("sid", sessionId.toString())
+                .subject(userId.toString()) //sub에 부왕 회원 번호 저장
+                .claim("sid", sessionId.toString()) //sid에 로그인 세선 번호 저장
                 .issuer("boowang")
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiresAt))

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -18,7 +19,15 @@ import com.example.boowang.auth.entity.SocialProvider;
 import com.example.boowang.global.exception.BusinessException;
 import com.example.boowang.user.entity.User;
 
+import com.example.boowang.auth.dto.SocialLoginResult;
+import com.example.boowang.global.response.ApiResponse;
+import com.example.boowang.global.security.jwt.JwtProperties;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import tools.jackson.databind.ObjectMapper;
 
+import java.time.Duration;
 // 어떤 주소를 공개하고 어떤 주소에 로그인을 요구할지 정하는 보안 설정이다.
 @Configuration
 @RequiredArgsConstructor
@@ -36,6 +45,19 @@ public class SecurityConfig {
 
     //소셜 계정에 연결된 부왕 사용자를 조회하거나 가입시키는 서비스
     private final SocialLoginService socialLoginService;
+
+    // 객체를 공통 JSON 응답으로 변환한다.
+    private final ObjectMapper objectMapper;
+
+    // 쿠키 유지 시간을 토큰 유효시간에 맞춘다.
+    private final JwtProperties jwtProperties;
+
+    //YAML에서 환경별 쿠키 설정을 읽는다.
+    @Value("${app.auth.cookie-secure}")
+    private boolean cookieSecure;
+
+    @Value("${app.auth.cookie-same-site}")
+    private String cookieSameSite;
 
     // 모든 HTTP 요청이 통과하는 Spring Security 필터들의 규칙을 만든다.
     @Bean
@@ -70,39 +92,89 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
-                        // 소셜 인증에 성공하면 부왕 사용자 조회·가입을 처리한다.
+                        // 소셜 인증 성공 후 부왕 세션과 토큰을 발급한다.
                         .successHandler((request, response, authentication) -> {
-                            // Spring이 검증한 소셜 인증 결과를 꺼낸다.
-                            OidcUser socialUser = //검증된 소셜 인증 결과
+                            // 현재 카카오 OIDC에서 검증된 사용자 정보를 꺼낸다.
+                            OidcUser socialUser =
                                     (OidcUser) authentication.getPrincipal();
 
-                            response.setContentType("text/plain;charset=UTF-8");
+                            // 토큰 응답을 JSON으로 보내고 캐시에 저장하지 않게 한다.
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
 
                             try {
-                                // 현재 연동한 제공자와 사용자 정보를 공통 서비스에 전달한다.
-                                User user = socialLoginService.findOrCreateUser(
-                                        SocialProvider.KAKAO, //현재 로그인한 제공자 종류
-                                        socialUser.getSubject(), //소셜 사용자 고유번호 sub부분
-                                        socialUser.getNickName() // 제공 받은 닉네임
+                                // 회원 확인·가입, 세션 저장, 토큰 발급을 실행한다.
+                                SocialLoginResult result = socialLoginService.login(
+                                        SocialProvider.KAKAO,
+                                        socialUser.getSubject(),
+                                        socialUser.getNickName()
                                 );
 
-                                // DB에 연결된 부왕 사용자 정보를 확인한다.
+                                // 리프레시 토큰 원본을 HttpOnly 쿠키로 만든다.
+                                ResponseCookie refreshCookie = //쿠키의 이름,값,속성 구성
+                                        ResponseCookie.from(
+                                                        "refreshToken",
+                                                        result.getRefreshToken()
+                                                )
+                                                .httpOnly(true)
+                                                .secure(cookieSecure)
+                                                .sameSite(cookieSameSite)
+                                                .path("/api/v1/auth") //앞으로 만들 재발급/로그아웃 API에 쿠키를 보내기 위한 범위
+                                                .maxAge(Duration.ofMillis(
+                                                        jwtProperties.getRefreshTokenExpirationMs()
+                                                ))
+                                                .build();
+
+                                // Set-Cookie 헤더를 받으면 브라우저가 쿠키를 저장한다.>javascript로는 읽을 수 없다
+                                response.addHeader(
+                                        HttpHeaders.SET_COOKIE,
+                                        refreshCookie.toString()
+                                );
+
+                                // 액세스 토큰 정보만 공통 JSON 응답으로 보낸다.
                                 response.setStatus(200);
-                                response.getWriter().write(
-                                        "부왕 사용자 확인 성공"
-                                                + "\n부왕 사용자 ID: " + user.getId()
-                                                + "\n닉네임: " + user.getNickname()
+                                objectMapper.writeValue(
+                                        response.getWriter(),
+                                        ApiResponse.success(
+                                                result.getAccessTokenResponse() //이거만 JSON으로 보내므로 리프레시 토큰은 응답에 없음
+                                        )
                                 );
                             } catch (BusinessException exception) {
-                                // 탈퇴 사용자 등 서비스의 업무 오류를 응답한다.
+                                // 탈퇴한 회원 등의 업무 오류도 공통 JSON으로 보낸다.
                                 response.setStatus(
                                         exception.getErrorCode().getHttpStatus().value()
                                 );
-                                response.getWriter().write(
-                                        exception.getErrorCode().name()
-                                                + "\n" + exception.getMessage()
+                                objectMapper.writeValue(
+                                        response.getWriter(),
+                                        ApiResponse.error(
+                                                exception.getErrorCode().name(),
+                                                exception.getMessage()
+                                        )
                                 );
                             }
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            // Spring이 전달한 소셜 인증 실패 코드를 꺼낸다.
+                            String errorCode = "SOCIAL_LOGIN_FAILED";
+                            if (exception instanceof OAuth2AuthenticationException) {
+                                OAuth2AuthenticationException socialException =
+                                        (OAuth2AuthenticationException) exception;
+                                errorCode = socialException.getError().getErrorCode();
+                            }
+
+                            // 실패 페이지로 이동하지 않고 오류를 JSON으로 반환한다.
+                            response.setStatus(401);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+                            objectMapper.writeValue(
+                                    response.getWriter(),
+                                    ApiResponse.error(
+                                            errorCode,
+                                            "소셜 로그인 인증에 실패했습니다."
+                                    )
+                            );
                         })
                 )
                 // 아이디·비밀번호 인증 필터보다 먼저 JWT 인증 필터를 실행한다.

@@ -62,3 +62,9 @@ cloud:
     region: ap-northeast-2
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
+
+app:
+  auth:
+    # HTTPS를 사용하는 운영 환경을 기본값으로 둔다.
+    cookie-secure: ${APP_AUTH_COOKIE_SECURE:true}
+    cookie-same-site: ${APP_AUTH_COOKIE_SAME_SITE:None}
