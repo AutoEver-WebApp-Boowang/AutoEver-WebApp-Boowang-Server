@@ -1,5 +1,8 @@
 package com.example.boowang.user.controller;
 
+import com.example.boowang.place.dto.response.PlaceSummaryResponse; //즐겨찾기 장소 한개
+import com.example.boowang.place.service.PlaceCommandService; //즐겨찾기 조회기능 호출
+
 import com.example.boowang.global.response.ApiResponse;
 import com.example.boowang.global.security.AuthenticatedUser;
 import com.example.boowang.user.dto.response.UserProfileResponse;
@@ -18,6 +21,7 @@ import com.example.boowang.user.service.UserCommandService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
 
 // 로그인한 사용자의 정보를 관리
 @RestController //json
@@ -32,6 +36,9 @@ public class UserController {
 
     // 사용자의 정보를 수정하는 서비스를 사용한다.
     private final UserCommandService userCommandService;
+
+    // 장소 담당자가 작성한 즐겨찾기 조회 서비스를 사용한다.
+    private final PlaceCommandService placeCommandService;
 
     //로그인한 사용자의 마이페이지 정보를 조회한다.
     @GetMapping("/me")
@@ -52,6 +59,16 @@ public class UserController {
     ) {
         UserProfileResponse profile =
                 userCommandService.updateMyProfile(user.getUserId(), request);
-        return ApiResponse.success(profile);
+        return ApiResponse.success(profile); //공통응답으로 묶음
+    }
+
+    //로그인한 사용자의 즐겨찾기 장소 목록 조회
+    @GetMapping("/me/favorites")
+    public ApiResponse<List<PlaceSummaryResponse>> getMyFavorites(
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        List<PlaceSummaryResponse> favorites =
+                placeCommandService.getFavorites(user.getUserId());
+        return ApiResponse.success(favorites); //마찬가지로 공통응답으로 묶음
     }
 }
