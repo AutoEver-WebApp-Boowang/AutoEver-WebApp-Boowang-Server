@@ -11,6 +11,8 @@ import com.example.boowang.review.dto.response.ReviewResponse;
 import com.example.boowang.review.entity.Review;
 import com.example.boowang.review.repository.ReviewLikeRepository;
 import com.example.boowang.review.repository.ReviewRepository;
+import com.example.boowang.user.entity.User;
+import com.example.boowang.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -28,6 +31,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
     private final PlaceRepository placeRepository;
+    private final UserRepository userRepository;
 
 
     //리뷰 목록 조회
@@ -54,6 +58,7 @@ public class ReviewService {
     }
 
     //리뷰 작성
+    @Transactional
     public ReviewCreateResponse create(Long placeId,  ReviewCreateRequest request, Long userId) {
 
         Place place = placeRepository.findById(placeId)
@@ -63,6 +68,11 @@ public class ReviewService {
         review.setUserId(userId);
         review.setContent(request.getContent());
         Review saved = reviewRepository.save(review);
+
+        User user = userRepository.findByIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.increaseTrustScore();
+
         return new ReviewCreateResponse(saved.getId(), saved.getCreatedAt());
 
     }
