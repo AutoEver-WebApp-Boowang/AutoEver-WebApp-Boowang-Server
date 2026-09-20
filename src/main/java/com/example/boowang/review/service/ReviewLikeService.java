@@ -19,6 +19,7 @@ public class ReviewLikeService {
     private final ReviewLikeRepository reviewLikeRepository;
     private final ReviewRepository reviewRepository;
 
+    // 리뷰 좋아요
     public ReviewLikeResponse like(Long reviewId, Long userId) {
 
 

@@ -54,13 +54,13 @@ public class ReviewService {
     }
 
     //리뷰 작성
-    public ReviewCreateResponse create(Long placeId, ReviewCreateRequest request) {
+    public ReviewCreateResponse create(Long placeId,  ReviewCreateRequest request, Long userId) {
 
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
         Review review = new Review();
         review.setPlace(place);
-        review.setUserId(1L);
+        review.setUserId(userId);
         review.setContent(request.getContent());
         Review saved = reviewRepository.save(review);
         return new ReviewCreateResponse(saved.getId(), saved.getCreatedAt());
