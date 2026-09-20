@@ -1,6 +1,7 @@
 package com.example.boowang.review.controller;
 
 import com.example.boowang.global.response.ApiResponse;
+import com.example.boowang.global.security.AuthenticatedUser;
 import com.example.boowang.place.entity.Place;
 import com.example.boowang.review.dto.request.ReviewCreateRequest;
 import com.example.boowang.review.dto.response.ReviewCreateResponse;
@@ -10,6 +11,7 @@ import com.example.boowang.review.service.ReviewService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,8 +36,8 @@ public class ReviewController {
     //리뷰 작성
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<ReviewCreateResponse> createReview(@PathVariable Long placeId, @RequestBody ReviewCreateRequest request) {
-        return ApiResponse.success(reviewService.create(placeId, request));
+    public ApiResponse<ReviewCreateResponse> createReview(@PathVariable Long placeId, @AuthenticationPrincipal AuthenticatedUser user, @RequestBody ReviewCreateRequest request) {
+        return ApiResponse.success(reviewService.create(placeId, request, user.getUserId() ));
     }
 
 
