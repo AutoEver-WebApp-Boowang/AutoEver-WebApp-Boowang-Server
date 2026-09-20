@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @Entity
 @Table(name= "users") //테이블 이름 users
@@ -43,6 +44,9 @@ public class User {
     private User(String nickname) {
         this.nickname = nickname;
         this.trustScore = 0;
+    }
+    public void increaseTrustScore() {
+        this.trustScore += 20;
     }
 
     // 다른 클래스에서는 이 메서드를 사용해서 새 사용자를 만든다.
