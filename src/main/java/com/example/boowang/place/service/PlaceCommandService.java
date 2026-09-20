@@ -59,25 +59,36 @@ public class PlaceCommandService {
     }
 
     // PATCH /api/places/{placeId} -- 장소정보 수정
-    public void updatePlaceFee(Long placeId, PlaceUpdateRequest request) {
+    public void updatePlaceFee(Long userId, Long placeId, PlaceUpdateRequest request) {
         if (request.feeDescription() == null && request.capacity() == null && request.hasRoof() == null) {
             throw new BusinessException(ErrorCode.PLACE_UPDATE_REQUEST_EMPTY);
         }
+
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
+        validateOwner(place, userId);
 
         ParkingDetail parkingDetail = parkingDetailRepository.findById(placeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PARKING_DETAIL_NOT_FOUND));
         parkingDetail.updateFee(request.feeDescription(), request.capacity(), request.hasRoof());
 
-        Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
         place.confirmNow(); // 최근확인 (수정한시간)
     }
 
     // DELETE /api/places/{placeId} -- 장소정보 삭제
-    public void deletePlace(Long placeId) {
+    public void deletePlace(Long userId, Long placeId) {
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
+        validateOwner(place, userId);
         place.softDelete();
+    }
+
+    // 장소를 등록한 사용자 본인인지 확인
+    // 본인 아닐시 403 에러코드
+     private void validateOwner(Place place, Long userId) {
+        if (!place.getCreatedBy().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
     }
 
     // POST /api/places/{placeId}/favorites -- 즐겨찾기 추가
