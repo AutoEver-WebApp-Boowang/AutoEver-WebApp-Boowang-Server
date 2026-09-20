@@ -5,6 +5,5 @@ package com.example.boowang.auth.entity;
 public enum SocialProvider {
 
     KAKAO,
-    NAVER,
     HYUNDAI
 }

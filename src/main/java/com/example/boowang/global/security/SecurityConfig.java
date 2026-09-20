@@ -61,7 +61,8 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/api/test-auth/login",
                                 "/api/v1/auth/refresh",
-                                "/error"
+                                "/error",
+                                "/favicon.ico"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/places",

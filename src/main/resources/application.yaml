@@ -45,10 +45,32 @@ spring:
               - profile_nickname
             client-name: Kakao
 
+          hyundai:
+            # .env에 작성한 현대자동차 앱 정보
+            client-id: ${HYUNDAI_CLIENT_ID}
+            client-secret: ${HYUNDAI_CLIENT_SECRET}
+
+            # 현대자동차는 Client ID와 Secret을 Basic 인증으로 전달한다.
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+
+            # registrationId가 hyundai로 바뀌어 콜백 주소가 완성된다.
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-name: Hyundai
+
         provider:
           kakao:
             # 카카오의 인증·토큰·사용자 정보 API 설정을 조회한다.
             issuer-uri: https://kauth.kakao.com
+
+          hyundai:
+            # 현대자동차 로그인, 토큰 발급, 사용자 정보 조회 주소
+            authorization-uri: https://prd.kr-ccapi.hyundai.com/api/v1/user/oauth2/authorize
+            token-uri: https://prd.kr-ccapi.hyundai.com/api/v1/user/oauth2/token
+            user-info-uri: https://prd.kr-ccapi.hyundai.com/api/v1/user/profile
+
+            # 사용자 정보 응답의 id를 현대자동차 사용자의 고유번호로 사용한다.
+            user-name-attribute: id
 
 jwt:
   secret: ${JWT_SECRET}

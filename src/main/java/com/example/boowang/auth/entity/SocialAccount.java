@@ -9,7 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-// 카카오·네이버·현대차 계정과 우리 User를 연결하는 테이블
+// 카카오·현대차 계정과 우리 User를 연결하는 테이블
 @Entity
 @Table(
         name = "social_accounts",
@@ -34,7 +34,7 @@ public class SocialAccount {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // KAKAO, NAVER, HYUNDAI 중 하나를 문자열로 저장
+    // KAKAO, HYUNDAI 중 하나를 문자열로 저장
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private SocialProvider provider;
