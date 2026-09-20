@@ -16,7 +16,7 @@ services:
       retries: 20
 
   app:
-    build: .
+    image: kimyunseo1229/boowang-app:latest
     ports:
       - "8080:8080"
     depends_on:
