@@ -43,8 +43,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtTokenProvider.parseClaims(accessToken); //액세스 토큰에서 클레임 추출
 
                 AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                        jwtTokenProvider.getUserId(claims),
-                        jwtTokenProvider.getSessionId(claims)
+                        jwtTokenProvider.getUserId(claims)
                 );
 
                 UsernamePasswordAuthenticationToken authentication =

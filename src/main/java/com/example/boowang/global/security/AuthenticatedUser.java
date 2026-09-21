@@ -10,15 +10,8 @@ public class AuthenticatedUser {
     // users 테이블에서 현재 사용자를 찾을 때 쓰는 ID
     private final Long userId;
 
-    // 현재 브라우저의 auth_sessions 행을 찾을 때 쓰는 ID
-    private final Long sessionId;
-
-    // JWT에서 꺼낸 사용자 ID와 로그인 세션 ID를 저장한다.
-    public AuthenticatedUser(
-            Long userId,
-            Long sessionId
-    ) {
+    // JWT에서 꺼낸 사용자 ID를 저장한다.
+    public AuthenticatedUser(Long userId) {
         this.userId = userId;
-        this.sessionId = sessionId;
     }
 }
