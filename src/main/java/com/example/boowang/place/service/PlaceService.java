@@ -85,6 +85,7 @@ public class PlaceService {
                 place.getId(),
                 place.getName(),
                 place.getAddress(),
+                place.getDetailAddress(),
                 place.getLatitude(),
                 place.getLongitude(),
                 pd != null ? pd.getIsFree() : null,
