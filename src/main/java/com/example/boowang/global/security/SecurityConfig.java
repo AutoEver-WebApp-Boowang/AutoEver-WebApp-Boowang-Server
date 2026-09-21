@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
                 )
-                // Swagger, 소셜 로그인, 테스트 로그인 주소는 로그인 없이 접근할 수 있다.
+                // Swagger, 소셜 로그인, 테스트 로그인, 토큰 관리 주소는 로그인 없이 접근할 수 있다.
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/swagger-ui/**",
@@ -61,6 +61,7 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/api/test-auth/login",
                                 "/api/v1/auth/refresh",
+                                "/api/v1/auth/logout",
                                 "/error",
                                 "/favicon.ico"
                         ).permitAll()
