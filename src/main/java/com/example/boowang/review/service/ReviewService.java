@@ -35,7 +35,7 @@ public class ReviewService {
 
 
     //리뷰 목록 조회
-    public ReviewListResponse findByPlace(Long placeId, int page, int size){
+    public ReviewListResponse findByPlace(Long placeId, int page, int size, Long userId) {
         placeRepository.findById(placeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -49,7 +49,9 @@ public class ReviewService {
                         review.getCreatedAt(),
                         userRepository.findByIdAndDeletedAtIsNull(review.getUserId())
                                 .orElseThrow(()-> new BusinessException(ErrorCode.USER_NOT_FOUND))
-                                .getNickname()
+                                .getNickname(),
+                        userId != null && (reviewLikeRepository.existsByReviewIdAndUserId(review.getId(), userId))
+
                 ))
                 .toList();
         return new ReviewListResponse(reviews, reviewPage.getTotalElements());
