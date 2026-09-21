@@ -46,7 +46,10 @@ public class ReviewService {
                         review.getId(),
                         review.getContent(),
                         reviewLikeRepository.countByReviewId(review.getId()),
-                        review.getCreatedAt()
+                        review.getCreatedAt(),
+                        userRepository.findByIdAndDeletedAtIsNull(review.getUserId())
+                                .orElseThrow(()-> new BusinessException(ErrorCode.USER_NOT_FOUND))
+                                .getNickname()
                 ))
                 .toList();
         return new ReviewListResponse(reviews, reviewPage.getTotalElements());
