@@ -10,6 +10,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -35,6 +36,10 @@ public class SuccessHandler implements AuthenticationSuccessHandler {
 
     // 로그인과 재발급에서 같은 설정의 Refresh Token 쿠키를 사용한다.
     private final RefreshTokenCookieProvider refreshTokenCookieProvider;
+
+    // 소셜 로그인 성공 후 이동할 프론트엔드 주소
+    @Value("${app.auth.login-success-url}")
+    private String loginSuccessUrl;
 
     @Override
     public void onAuthenticationSuccess(
@@ -83,9 +88,7 @@ public class SuccessHandler implements AuthenticationSuccessHandler {
         // 카카오는 sub, 현대자동차는 id가 사용된다.
         String providerUserId = socialUser.getName();
 
-        // 토큰 응답을 JSON으로 보내고 캐시에 저장하지 않게 한다.
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding(StandardCharsets.UTF_8);
+        // 로그인 성공 응답을 브라우저나 중간 서버가 저장하지 않게 한다.
         response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
 
         try {
@@ -108,19 +111,16 @@ public class SuccessHandler implements AuthenticationSuccessHandler {
                     refreshCookie.toString()
             );
 
-            // 액세스 토큰 정보만 공통 JSON 응답으로 보낸다.
-            response.setStatus(200);
-            objectMapper.writeValue(
-                    response.getWriter(),
-                    ApiResponse.success(
-                            result.getAccessTokenResponse()
-                    )
-            );
+            // Refresh Token 쿠키를 저장한 뒤 프론트 로그인 완료 화면으로 이동한다.
+            response.sendRedirect(loginSuccessUrl);
         } catch (BusinessException exception) {
             // 탈퇴한 회원 등의 업무 오류도 공통 JSON으로 보낸다.
             response.setStatus(
                     exception.getErrorCode().getHttpStatus().value()
             );
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding(StandardCharsets.UTF_8);
+
             objectMapper.writeValue(
                     response.getWriter(),
                     ApiResponse.error(
