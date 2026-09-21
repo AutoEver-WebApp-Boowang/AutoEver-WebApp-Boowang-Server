@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication", description = "토큰 재발급")
+@Tag(name = "Authentication", description = "토큰 재발급 및 로그아웃")
 public class AuthController {
 
     private final AuthTokenService authTokenService;
@@ -49,5 +49,29 @@ public class AuthController {
         return ApiResponse.success( //액세스 토큰 반환
                 result.getAccessTokenResponse()
         );
+    }
+    // 현재 브라우저의 Refresh Token을 폐기하고 쿠키를 삭제한다.
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(
+            @CookieValue(
+                    name = RefreshTokenCookieProvider.COOKIE_NAME,
+                    required = false
+            ) String refreshToken,
+            HttpServletResponse response
+    ) {
+        // DB의 해당 Refresh Token 세션을 폐기한다.
+        authTokenService.logout(refreshToken);
+
+        // 브라우저의 Refresh Token 쿠키를 삭제하는 응답 쿠키를 만든다.
+        ResponseCookie deleteCookie =
+                refreshTokenCookieProvider.deleteCookie();
+
+        // Set-Cookie 응답 헤더로 만료된 쿠키를 전달한다.
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                deleteCookie.toString()
+        );
+
+        return ApiResponse.success(null);
     }
 }

@@ -58,6 +58,23 @@ public class AuthTokenService {
         // 같은 사용자에게 새 세션과 새 토큰 묶음을 발급한다.
         return issue(user);
     }
+    // 현재 브라우저의 Refresh Token을 폐기한다.
+    @Transactional
+    public void logout(String refreshToken) {
+        // 쿠키가 이미 없거나 비어 있어도 로그아웃은 성공으로 처리한다.
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
+        }
+
+        // 쿠키의 Refresh Token 원본을 DB 조회에 사용할 해시값으로 바꾼다.
+        String refreshTokenHash =
+                refreshTokenProvider.hashToken(refreshToken);
+
+        // 아직 폐기되지 않은 세션이 있으면 revoked_at을 기록한다.
+        authSessionRepository
+                .findByRefreshTokenHashAndRevokedAtIsNull(refreshTokenHash)
+                .ifPresent(authSession -> authSession.revoke());
+    }
 
     // 로그인 또는 재발급에 사용할 새 세션과 토큰 묶음을 만든다.
     @Transactional //새토큰 발급 도중 오류 발생시에 함께 취소
