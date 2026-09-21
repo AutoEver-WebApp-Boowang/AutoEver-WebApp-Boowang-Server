@@ -90,3 +90,4 @@ app:
     # HTTPS를 사용하는 운영 환경을 기본값으로 둔다.
     cookie-secure: ${APP_AUTH_COOKIE_SECURE:true}
     cookie-same-site: ${APP_AUTH_COOKIE_SAME_SITE:None}
+    login-success-url: ${APP_AUTH_LOGIN_SUCCESS_URL}
