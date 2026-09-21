@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.web.bind.annotation.PutMapping;
 
 @Entity
 @Table(name= "users") //테이블 이름 users
@@ -65,4 +64,8 @@ public class User {
         this.phone = phone;
     }
 
+    // 회원을 실제로 삭제하지 않고 탈퇴 시각을 기록한다.
+    public void withdraw() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }
