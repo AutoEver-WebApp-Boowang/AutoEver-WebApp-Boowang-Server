@@ -5,12 +5,17 @@ import com.example.boowang.place.service.PlaceCommandService; //즐겨찾기 조
 
 import com.example.boowang.global.response.ApiResponse;
 import com.example.boowang.global.security.AuthenticatedUser;
+import com.example.boowang.global.security.token.RefreshTokenCookieProvider;
 import com.example.boowang.user.dto.response.UserProfileResponse;
 import com.example.boowang.user.service.UserQueryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +42,9 @@ public class UserController {
     // 사용자의 정보를 수정하는 서비스를 사용한다.
     private final UserCommandService userCommandService;
 
+    // Refresh Token 쿠키를 삭제할 때 사용한다.
+    private final RefreshTokenCookieProvider refreshTokenCookieProvider;
+
     // 장소 담당자가 작성한 즐겨찾기 조회 서비스를 사용한다.
     private final PlaceCommandService placeCommandService;
 
@@ -60,6 +68,27 @@ public class UserController {
         UserProfileResponse profile =
                 userCommandService.updateMyProfile(user.getUserId(), request);
         return ApiResponse.success(profile); //공통응답으로 묶음
+    }
+
+    // 로그인한 사용자를 탈퇴 처리한다.
+    @DeleteMapping("/me")
+    public ApiResponse<Void> withdraw(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            HttpServletResponse response
+    ) {
+        // 사용자 탈퇴와 모든 Refresh Token 세션 폐기를 실행한다.
+        userCommandService.withdraw(user.getUserId());
+
+        // 현재 브라우저의 Refresh Token 쿠키를 삭제한다.
+        ResponseCookie deleteCookie =
+                refreshTokenCookieProvider.deleteCookie();
+
+        response.addHeader(
+                HttpHeaders.SET_COOKIE,
+                deleteCookie.toString()
+        );
+
+        return ApiResponse.success(null);
     }
 
     //로그인한 사용자의 즐겨찾기 장소 목록 조회
