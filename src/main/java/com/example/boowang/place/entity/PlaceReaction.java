@@ -49,4 +49,8 @@ public class PlaceReaction {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void changeReactionType(String reactionType) {
+        this.reactionType = reactionType;
+    }
+
 }
