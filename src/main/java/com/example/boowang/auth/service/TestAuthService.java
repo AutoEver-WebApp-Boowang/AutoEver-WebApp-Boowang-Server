@@ -21,9 +21,6 @@ public class TestAuthService {
     // 액세스 토큰을 Authorization 헤더에 넣을 때 사용하는 인증 방식
     private static final String TOKEN_TYPE = "Bearer";
 
-    //테스트 토큰은 실제 로그인 세션을 만들지 않으므로 임시 세션 번호를 사용한다.
-    private static final Long TEST_SESSION_ID = 0L;
-
     // 테스트 사용자를 조회하거나 처음 생성할 때 사용한다.
     private final UserRepository userRepository;
 
@@ -39,10 +36,9 @@ public class TestAuthService {
         // 기존 테스트 사용자를 찾거나 처음 생성한다.
         User testUser = findOrCreateTestUser(); //db에서 테스트 사용자를 찾고 없으면 새로 생성, 반환된 사용자 변수에 저장
 
-        // 테스트 사용자 ID와 임시 세션 번호로 액세스 토큰을 만든다.
+        // 테스트 사용자 ID로 액세스 토큰을 만든다.
         String accessToken = jwtTokenProvider.createAccessToken(
-                testUser.getId(),
-                TEST_SESSION_ID //테스트에서는 실제 세션을 만들지 않으므로 0을 넣음
+                testUser.getId()
         );
 
         // 설정된 만료시간을 밀리초에서 초 단위로 바꾼다.

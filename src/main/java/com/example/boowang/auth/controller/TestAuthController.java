@@ -3,7 +3,7 @@ package com.example.boowang.auth.controller;
 import com.example.boowang.auth.dto.response.AccessTokenResponse;
 import com.example.boowang.auth.service.TestAuthService;
 import com.example.boowang.global.response.ApiResponse;
-import com.example.boowang.global.security.AuthenticatedUser; //JWT 필터가 저장한 userId, sessionId를 꺼내기 위함
+import com.example.boowang.global.security.AuthenticatedUser; //JWT 필터가 저장한 userId를 꺼내기 위함
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import lombok.RequiredArgsConstructor;
@@ -42,18 +42,15 @@ public class TestAuthController {
                 SecurityContextHolder.getContext()
                         .getAuthentication();
 
-        //인증 정보 안에서 우리 사용자 정보를 꺼냄
-        AuthenticatedUser authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
+        // 인증 정보 안에서 우리 사용자 정보를 꺼낸다.
+        AuthenticatedUser authenticatedUser =
+                (AuthenticatedUser) authentication.getPrincipal();
 
-        //사용자 아이디, 세션아이디 map에 넣어서 보기 쉽게
+        // 사용자 아이디를 Map에 넣어서 보기 쉽게 반환한다.
         Map<String, Long> userInformation = new HashMap<>();
         userInformation.put(
                 "userId",
                 authenticatedUser.getUserId()
-        );
-        userInformation.put(
-                "sessionId",
-                authenticatedUser.getSessionId()
         );
 
         return ApiResponse.success(userInformation);

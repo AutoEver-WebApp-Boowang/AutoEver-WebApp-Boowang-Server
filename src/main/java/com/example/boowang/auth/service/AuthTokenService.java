@@ -74,7 +74,8 @@ public class AuthTokenService {
                 )
         );
 
-        AuthSession newSession = authSessionRepository.save( //새 로그인 세션을 저장
+        // Refresh Token의 해시와 만료 정보를 DB에 저장한다.
+        authSessionRepository.save(
                 AuthSession.create(
                         user,
                         newRefreshTokenHash,
@@ -82,10 +83,10 @@ public class AuthTokenService {
                 )
         );
 
+        // Access Token에는 사용자 ID만 넣는다.
         String newAccessToken =
-                jwtTokenProvider.createAccessToken( //새 액세스 토큰 생성
-                        user.getId(), //회원번호
-                        newSession.getId() //새 세션번호
+                jwtTokenProvider.createAccessToken(
+                        user.getId()
                 );
 
         AccessTokenResponse accessTokenResponse =

@@ -35,14 +35,13 @@ public class JwtTokenProvider {
         this. accessTokenExpirationMs = jwtProperties.getAccessTokenExpirationMs();
     }
 
-    // 사용자와 로그인 세션 정보를 담은 Access Token을 만든다.
-    public String createAccessToken(Long userId, Long sessionId) {
+    // 사용자 정보를 담은 Access Token을 만든다.
+    public String createAccessToken(Long userId) {
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plusMillis(accessTokenExpirationMs);
 
         return Jwts.builder()
-                .subject(userId.toString()) //sub에 부왕 회원 번호 저장
-                .claim("sid", sessionId.toString()) //sid에 로그인 세선 번호 저장
+                .subject(userId.toString()) // sub에 부왕 회원 번호 저장
                 .issuer("boowang")
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiresAt))
@@ -62,10 +61,5 @@ public class JwtTokenProvider {
         return Long.valueOf(claims.getSubject());
     }
 
-    //로그인 세션 ID는 JWT의 sid에 들어있음
-    // 토큰 정보에서 로그인 세션 ID를 꺼낸다.
-    public Long getSessionId(Claims claims) {
-        return Long.valueOf(claims.get("sid", String.class));
-    }
 }
 
