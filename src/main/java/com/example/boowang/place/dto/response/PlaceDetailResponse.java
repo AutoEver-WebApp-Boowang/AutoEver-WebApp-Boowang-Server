@@ -22,6 +22,8 @@ public record PlaceDetailResponse(
         Integer notRecommendCount, // 비추천 수
         Integer reviewCount,
         LocalDateTime updatedAt,
-        List<String> photos  // 이미지 리스트
+        List<String> photos,  // 이미지 리스트
+        String myReaction  // 추천/비추천/안누름
+//        Boolean isFavorited  // true/false
 ) {
 }

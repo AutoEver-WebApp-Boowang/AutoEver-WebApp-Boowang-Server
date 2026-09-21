@@ -9,6 +9,8 @@ import com.example.boowang.place.dto.response.PlaceSummaryResponse;
 import com.example.boowang.place.entity.ParkingDetail;
 import com.example.boowang.place.entity.Place;
 import com.example.boowang.place.entity.PlacePhoto;
+import com.example.boowang.place.entity.PlaceReaction;
+import com.example.boowang.place.repository.FavoriteRepository;
 import com.example.boowang.place.repository.PlacePhotoRepository;
 import com.example.boowang.place.repository.PlaceReactionRepository;
 import com.example.boowang.place.repository.PlaceRepository;
@@ -58,7 +60,7 @@ public class PlaceService {
     }
 
     // GET /api/places/{placeId} -- 장소 상세정보 조회
-    public PlaceDetailResponse getPlaceDetail(Long placeId) {
+    public PlaceDetailResponse getPlaceDetail(Long placeId, Long userId) {
         Place place = placeRepository.findById(placeId)
                 .filter(p -> p.getDeletedAt() == null)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
@@ -72,6 +74,12 @@ public class PlaceService {
                 .stream()
                 .map(PlacePhoto::getImageUrl)
                 .toList();
+
+        String myReaction = (userId != null)
+                ? placeReactionRepository.findByUserIdAndPlaceId(userId, placeId)
+                .map(PlaceReaction::getReactionType)
+                .orElse(null)
+                : null;
 
         return new PlaceDetailResponse(
                 place.getId(),
@@ -91,7 +99,8 @@ public class PlaceService {
                 (int) notRecommendCount,
                 0,
                 place.getUpdatedAt(),
-                photos
+                photos,
+                myReaction
         );
     }
 

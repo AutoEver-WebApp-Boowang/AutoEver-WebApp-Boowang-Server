@@ -1,10 +1,12 @@
 package com.example.boowang.place.controller;
 
+import com.example.boowang.global.security.AuthenticatedUser;
 import com.example.boowang.place.dto.response.PlaceDetailResponse;
 import com.example.boowang.place.dto.response.PlaceListResponse;
 import com.example.boowang.place.dto.response.PlaceSearchResponse;
 import com.example.boowang.place.service.PlaceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -37,7 +39,11 @@ public class PlaceController {
 
     // GET /api/places/{placeId} -- 상세조회 (인증 불필요)
     @GetMapping("/{placeId}")
-    public PlaceDetailResponse getPlaceDetail(@PathVariable Long placeId) {
-        return placeService.getPlaceDetail(placeId);
+    public PlaceDetailResponse getPlaceDetail(
+            @PathVariable Long placeId,
+            @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        Long userId = (user != null) ? user.getUserId() : null;
+        return placeService.getPlaceDetail(placeId, userId);
     }
 }
