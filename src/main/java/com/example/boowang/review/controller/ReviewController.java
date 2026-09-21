@@ -28,8 +28,11 @@ public class ReviewController {
     @GetMapping
     public ApiResponse<ReviewListResponse> getReviews(@PathVariable Long placeId,
                                                       @RequestParam(defaultValue = "0") int page,
-                                                      @RequestParam(defaultValue = "10") int size){
-        return ApiResponse.success(reviewService.findByPlace(placeId, page, size));
+                                                      @RequestParam(defaultValue = "10") int size,
+                                                      @AuthenticationPrincipal AuthenticatedUser user
+    ) {
+        Long currentUserId = user != null ? user.getUserId() : null;
+        return ApiResponse.success(reviewService.findByPlace(placeId, page, size, currentUserId));
     }
 
 

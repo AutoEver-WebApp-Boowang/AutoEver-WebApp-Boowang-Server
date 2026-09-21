@@ -15,4 +15,5 @@ public class ReviewResponse {
     private Long likeCount;
     private LocalDateTime createdAt;
     private String nickname;
+    private boolean isLike;
 }
