@@ -8,6 +8,7 @@ public record PlaceDetailResponse(
         Long id,
         String name,
         String address,
+        String detailAddress,  // 상세주소
         BigDecimal latitude,
         BigDecimal longitude,
         Boolean isFree,
