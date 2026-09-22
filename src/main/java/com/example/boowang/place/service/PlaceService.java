@@ -10,16 +10,18 @@ import com.example.boowang.place.entity.ParkingDetail;
 import com.example.boowang.place.entity.Place;
 import com.example.boowang.place.entity.PlacePhoto;
 import com.example.boowang.place.entity.PlaceReaction;
-import com.example.boowang.place.repository.FavoriteRepository;
 import com.example.boowang.place.repository.PlacePhotoRepository;
 import com.example.boowang.place.repository.PlaceReactionRepository;
 import com.example.boowang.place.repository.PlaceRepository;
+import com.example.boowang.review.entity.Review;
+import com.example.boowang.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -32,6 +34,7 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final PlaceReactionRepository placeReactionRepository;
     private final PlacePhotoRepository placePhotoRepository;
+    private final ReviewRepository reviewRepository;
 
     // GET /api/places -- Bounding Box 내 장소 조회
     public PlaceListResponse getPlacesInBoundingBox(BigDecimal swLat, BigDecimal swLng,
@@ -69,11 +72,17 @@ public class PlaceService {
 
         long recommendCount = placeReactionRepository.countByPlaceIdAndReactionType(placeId, "추천");
         long notRecommendCount = placeReactionRepository.countByPlaceIdAndReactionType(placeId, "비추천");
+        long reviewCount = reviewRepository.countByPlace_Id(placeId);
 
         List<String> photos = placePhotoRepository.findByPlaceIdOrderBySortOrderAsc(placeId)
                 .stream()
                 .map(PlacePhoto::getImageUrl)
                 .toList();
+
+        LocalDateTime lastConfirmedAt = reviewRepository
+                .findTopByPlace_IdOrderByCreatedAtDesc(placeId)
+                .map(Review::getCreatedAt)
+                .orElse(null);
 
         String myReaction = (userId != null)
                 ? placeReactionRepository.findByUserIdAndPlaceId(userId, placeId)
@@ -95,10 +104,10 @@ public class PlaceService {
                 pd != null ? pd.getFeeDescription() : null,
                 place.getDescription(),
                 place.getType(),
-                place.getLastConfirmedAt(),
+                lastConfirmedAt,
                 (int) recommendCount,
                 (int) notRecommendCount,
-                0,
+                (int) reviewCount,
                 place.getUpdatedAt(),
                 photos,
                 myReaction
@@ -114,6 +123,12 @@ public class PlaceService {
 
         long recommendCount = placeReactionRepository.countByPlaceIdAndReactionType(place.getId(), "추천");
         long notRecommendCount = placeReactionRepository.countByPlaceIdAndReactionType(place.getId(), "비추천");
+        long reviewCount = reviewRepository.countByPlace_Id(place.getId());
+
+        LocalDateTime lastConfirmedAt = reviewRepository
+                .findTopByPlace_IdOrderByCreatedAtDesc(place.getId())
+                .map(Review::getCreatedAt)
+                .orElse(null);
 
         return new PlaceSummaryResponse(
                 place.getId(),
@@ -126,9 +141,10 @@ public class PlaceService {
                 pd != null ? pd.getOperatingHours() : null,
                 thumbnailUrl,
                 place.getType(),
-                place.getLastConfirmedAt(),
+                lastConfirmedAt,
                 (int) recommendCount,
-                (int) notRecommendCount
+                (int) notRecommendCount,
+                (int) reviewCount
         );
     }
 

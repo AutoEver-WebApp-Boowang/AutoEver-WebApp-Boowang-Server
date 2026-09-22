@@ -16,7 +16,8 @@ public record PlaceSummaryResponse(
         String type, // 공영/제보 구분
         LocalDateTime lastConfirmedAt, // 최근 확인 시각
         Integer recommendCount, // 추천 수
-        Integer notRecommendCount // 비추천 수
-        // Double distance  -> 추후에 구현
+        Integer notRecommendCount, // 비추천 수
+        Integer reviewCount  // 리뷰 수
+
 ) {
 }
