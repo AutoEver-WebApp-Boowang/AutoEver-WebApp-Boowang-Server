@@ -1,6 +1,7 @@
 package com.example.boowang.global.security;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -8,6 +9,7 @@ import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.endpoint.DefaultOAuth2TokenRequestParametersConverter;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
@@ -18,12 +20,15 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.example.boowang.global.security.jwt.JwtAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 // 어떤 주소를 공개하고 어떤 주소에 로그인을 요구할지 정하는 보안 설정이다.
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -140,6 +145,24 @@ public class SecurityConfig {
 
         RestClientAuthorizationCodeTokenResponseClient responseClient =
                 new RestClientAuthorizationCodeTokenResponseClient();
+        DefaultOAuth2TokenRequestParametersConverter<OAuth2AuthorizationCodeGrantRequest>
+                requestParametersConverter = new DefaultOAuth2TokenRequestParametersConverter<>();
+        responseClient.addParametersConverter(grantRequest -> {
+            MultiValueMap<String, String> parameters =
+                    requestParametersConverter.convert(grantRequest);
+            String code = parameters.getFirst("code");
+
+            log.info(
+                    "OAuth2 토큰 요청 - registrationId={}, parameterNames={}, redirectUri={}, codeLength={}, codeVerifierPresent={}",
+                    grantRequest.getClientRegistration().getRegistrationId(),
+                    parameters.keySet(),
+                    parameters.getFirst("redirect_uri"),
+                    code == null ? 0 : code.length(),
+                    parameters.containsKey("code_verifier")
+            );
+
+            return new LinkedMultiValueMap<>();
+        });
         responseClient.setRestClient(restClient);
         return responseClient;
     }
