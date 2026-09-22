@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -14,6 +15,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FailureHandler implements AuthenticationFailureHandler {
@@ -29,6 +31,13 @@ public class FailureHandler implements AuthenticationFailureHandler {
                     (OAuth2AuthenticationException) exception;
             errorCode = socialException.getError().getErrorCode();
         }
+
+        log.error(
+                "OAuth2 로그인 실패 - requestUri={}, errorCode={}",
+                request.getRequestURI(),
+                errorCode,
+                exception
+        );
 
         // 실패 페이지로 이동하지 않고 오류를 JSON으로 반환한다.
         response.setStatus(401);

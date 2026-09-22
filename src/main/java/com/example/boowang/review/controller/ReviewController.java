@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/places/{placeId}/reviews")
 @RequiredArgsConstructor
-@SecurityRequirement(name = "bearerAuth")
+
 public class ReviewController {
     private final ReviewService reviewService;
 
@@ -37,6 +37,7 @@ public class ReviewController {
 
 
     //리뷰 작성
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<ReviewCreateResponse> createReview(@PathVariable Long placeId, @AuthenticationPrincipal AuthenticatedUser user, @RequestBody ReviewCreateRequest request) {
