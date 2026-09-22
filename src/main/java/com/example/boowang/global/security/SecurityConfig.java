@@ -4,10 +4,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.security.oauth2.core.http.converter.OAuth2ErrorHttpMessageConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.example.boowang.global.security.jwt.JwtAuthenticationFilter;
@@ -35,7 +44,10 @@ public class SecurityConfig {
 
     // 모든 HTTP 요청이 통과하는 Spring Security 필터들의 규칙을 만든다.
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient
+    ) throws Exception {
         http
                 // JWT를 사용하므로 서버 세션 기반 CSRF 보호는 사용하지 않는다.
                 .csrf(AbstractHttpConfigurer::disable)
@@ -78,6 +90,9 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth -> oauth
                         // 소셜 인증 성공 후 부왕 세션과 토큰을 발급한다.
+                        .tokenEndpoint(token ->
+                                token.accessTokenResponseClient(accessTokenResponseClient)
+                        )
                         .successHandler(successHandler)
                         .failureHandler(failureHandler)
                 )
@@ -89,5 +104,43 @@ public class SecurityConfig {
 
         // 위에서 작성한 규칙으로 실제 Security 필터 묶음을 완성한다.
         return http.build();
+    }
+
+    @Bean
+    public OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> accessTokenResponseClient() {
+        OAuth2ErrorHttpMessageConverter errorConverter = new OAuth2ErrorHttpMessageConverter();
+        errorConverter.setErrorConverter(parameters -> {
+            String errorCode = parameters.get("error");
+            if (errorCode == null || errorCode.isBlank()) {
+                errorCode = parameters.get("errCode");
+            }
+            if (errorCode == null || errorCode.isBlank()) {
+                errorCode = "oauth2_provider_error";
+            }
+
+            String errorDescription = parameters.get("error_description");
+            if (errorDescription == null || errorDescription.isBlank()) {
+                errorDescription = parameters.get("errMsg");
+            }
+
+            String errorUri = parameters.get("error_uri");
+            return new OAuth2Error(errorCode, errorDescription, errorUri);
+        });
+
+        OAuth2ErrorResponseErrorHandler errorHandler = new OAuth2ErrorResponseErrorHandler();
+        errorHandler.setErrorConverter(errorConverter);
+
+        RestClient restClient = RestClient.builder()
+                .configureMessageConverters(messageConverters -> {
+                    messageConverters.addCustomConverter(new FormHttpMessageConverter());
+                    messageConverters.addCustomConverter(new OAuth2AccessTokenResponseHttpMessageConverter());
+                })
+                .defaultStatusHandler(errorHandler)
+                .build();
+
+        RestClientAuthorizationCodeTokenResponseClient responseClient =
+                new RestClientAuthorizationCodeTokenResponseClient();
+        responseClient.setRestClient(restClient);
+        return responseClient;
     }
 }
